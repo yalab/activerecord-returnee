@@ -1,11 +1,11 @@
 
 lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require "activerecord/returnee/version"
+require "active_record/returnee/version"
 
 Gem::Specification.new do |spec|
   spec.name          = "activerecord-returnee"
-  spec.version       = Activerecord::Returnee::VERSION
+  spec.version       = ActiveRecord::Returnee::VERSION
   spec.authors       = ["yalab"]
   spec.email         = ["rudeboyjet@gmail.com"]
 
