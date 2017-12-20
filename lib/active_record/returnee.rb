@@ -6,9 +6,8 @@ module ActiveRecord
       <<~EOS
       class Create#{table_name.capitalize} < ActiveRecord::Migration[5.1]
         def change
-          create_table :#{table_name} do |t|
-            #{columns(table_name)}
-            #{indexes(table_name)}
+          create_table :#{table_name}#{id_type(table_name)} do |t|
+            #{columns(table_name)}#{indexes(table_name)}
           end
         end
       end
@@ -16,6 +15,13 @@ module ActiveRecord
     end
 
     private
+    def self.id_type(table_name)
+      id = ActiveRecord::Base.connection.columns(table_name).find{|column| column.name == "id" }
+      if id.sql_type == "uuid"
+        ", id: :uuid"
+      end
+    end
+
     def self.columns(table_name)
       columns = ActiveRecord::Base.connection.columns(table_name)
       columns_hash = columns.each_with_object({}){|column, hash| hash[column.name] = column }
@@ -30,7 +36,9 @@ module ActiveRecord
     end
 
     def self.indexes(table_name)
-      ActiveRecord::Base.connection.indexes(table_name).map{|index|
+      indexes = ActiveRecord::Base.connection.indexes(table_name).reject{|index| index.columns == ["id"] }
+      return if indexes.length < 1
+      "\n      " + indexes.map{|index|
         "t.index #{index_name(index)}"
       }.join("\n")
     end

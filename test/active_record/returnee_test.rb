@@ -12,6 +12,9 @@ class ActiveRecord::ReturneeTest < Minitest::Test
      <<~SQL1,
        CREATE UNIQUE INDEX "index_users_on_email" ON "users" ("email");
      SQL1
+     <<~SQL2,
+       CREATE TABLE "groups" ("id" uuid NOT NULL PRIMARY KEY, "name" varchar, "created_at" datetime NOT NULL, "updated_at" datetime NOT NULL);
+     SQL2
     ].each do |sql|
       ActiveRecord::Base.connection.execute sql
     end
@@ -41,6 +44,20 @@ class ActiveRecord::ReturneeTest < Minitest::Test
 
             t.timestamps
             t.index :email, unique: true
+          end
+        end
+      end
+    CREATE_TABLE
+  end
+
+  def test_create_groups
+    assert_equal <<~CREATE_TABLE, ActiveRecord::Returnee.to_create_table("groups")
+      class CreateGroups < ActiveRecord::Migration[5.1]
+        def change
+          create_table :groups, id: :uuid do |t|
+            t.string :name
+
+            t.timestamps
           end
         end
       end
