@@ -1,5 +1,5 @@
 module ActiveRecord
-  module Returnee
+  class Returnee
     VERSION = "0.1.0"
   end
 end

@@ -18,6 +18,7 @@ class ActiveRecord::ReturneeTest < Minitest::Test
     ].each do |sql|
       ActiveRecord::Base.connection.execute sql
     end
+    @returnee = ActiveRecord::Returnee.new
   end
 
   def test_that_it_has_a_version_number
@@ -25,7 +26,7 @@ class ActiveRecord::ReturneeTest < Minitest::Test
   end
 
   def test_create_users
-    assert_equal <<~CREATE_TABLE, ActiveRecord::Returnee.to_create_table("users")
+    assert_equal <<~CREATE_TABLE, @returnee.to_create_table("users")
       class CreateUsers < ActiveRecord::Migration[5.1]
         def change
           create_table :users do |t|
@@ -51,7 +52,7 @@ class ActiveRecord::ReturneeTest < Minitest::Test
   end
 
   def test_create_groups
-    assert_equal <<~CREATE_TABLE, ActiveRecord::Returnee.to_create_table("groups")
+    assert_equal <<~CREATE_TABLE, @returnee.to_create_table("groups")
       class CreateGroups < ActiveRecord::Migration[5.1]
         def change
           create_table :groups, id: :uuid do |t|
