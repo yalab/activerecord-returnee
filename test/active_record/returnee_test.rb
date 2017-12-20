@@ -15,6 +15,21 @@ class ActiveRecord::ReturneeTest < Minitest::Test
      <<~SQL2,
        CREATE TABLE "groups" ("id" uuid NOT NULL PRIMARY KEY, "name" varchar, "created_at" datetime NOT NULL, "updated_at" datetime NOT NULL);
      SQL2
+     <<~SQL3,
+       CREATE TABLE "members" ("id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "user_id" integer, "group_id" uuid, "created_at" datetime NOT NULL, "updated_at" datetime NOT NULL, CONSTRAINT "fk_rails_2e88fb7ce9"
+       FOREIGN KEY ("user_id")
+         REFERENCES "users" ("id")
+       , CONSTRAINT "fk_rails_298a39267f"
+       FOREIGN KEY ("group_id")
+         REFERENCES "groups" ("id")
+       );
+     SQL3
+     <<~SQL4,
+       CREATE INDEX "index_members_on_user_id" ON "members" ("user_id");
+     SQL4
+     <<~SQL5,
+       CREATE INDEX "index_members_on_group_id" ON "members" ("group_id");
+     SQL5
     ].each do |sql|
       ActiveRecord::Base.connection.execute sql
     end
@@ -57,6 +72,21 @@ class ActiveRecord::ReturneeTest < Minitest::Test
         def change
           create_table :groups, id: :uuid do |t|
             t.string :name
+
+            t.timestamps
+          end
+        end
+      end
+    CREATE_TABLE
+  end
+
+  def test_create_members
+    assert_equal <<~CREATE_TABLE, @returnee.to_create_table("members")
+      class CreateMembers < ActiveRecord::Migration[5.1]
+        def change
+          create_table :members do |t|
+            t.references :user, foreign_key: true
+            t.references :group, type: :uuid, foreign_key: true
 
             t.timestamps
           end
