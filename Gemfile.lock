@@ -23,6 +23,7 @@ GEM
     i18n (0.9.1)
       concurrent-ruby (~> 1.0)
     minitest (5.10.3)
+    pg (0.21.0)
     rake (10.5.0)
     sqlite3 (1.3.13)
     thread_safe (0.3.6)
@@ -36,8 +37,9 @@ DEPENDENCIES
   activerecord-returnee!
   bundler (~> 1.16)
   minitest (~> 5.0)
+  pg
   rake (~> 10.0)
   sqlite3
 
 BUNDLED WITH
-   1.16.0
+   1.16.1
