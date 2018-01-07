@@ -3,36 +3,14 @@ require "test_helper"
 class ActiveRecord::ReturneeTest < Minitest::Test
   def setup
     ActiveRecord::Base.establish_connection(
-      :adapter => "sqlite3",
-      :database  => ":memory:"
+      :adapter => "postgresql",
+      :database  => "returnee_test"
     )
-    [<<~SQL0,
-      CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "name" varchar NOT NULL, "email" varchar NOT NULL, "address" text, "age" integer DEFAULT 0, "weight" float, "height" decimal, "confirmed_at" datetime, "deleted_at" datetime, "last_login" time, "birthday" date, "avatar" blob, "email_receive" boolean DEFAULT 'f', "created_at" datetime NOT NULL, "updated_at" datetime NOT NULL);
-     SQL0
-     <<~SQL1,
-       CREATE UNIQUE INDEX "index_users_on_email" ON "users" ("email");
-     SQL1
-     <<~SQL2,
-       CREATE TABLE "groups" ("id" uuid NOT NULL PRIMARY KEY, "name" varchar, "created_at" datetime NOT NULL, "updated_at" datetime NOT NULL);
-     SQL2
-     <<~SQL3,
-       CREATE TABLE "members" ("id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "user_id" integer, "group_id" uuid, "created_at" datetime NOT NULL, "updated_at" datetime NOT NULL, CONSTRAINT "fk_rails_2e88fb7ce9"
-       FOREIGN KEY ("user_id")
-         REFERENCES "users" ("id")
-       , CONSTRAINT "fk_rails_298a39267f"
-       FOREIGN KEY ("group_id")
-         REFERENCES "groups" ("id")
-       );
-     SQL3
-     <<~SQL4,
-       CREATE INDEX "index_members_on_user_id" ON "members" ("user_id");
-     SQL4
-     <<~SQL5,
-       CREATE INDEX "index_members_on_group_id" ON "members" ("group_id");
-     SQL5
-    ].each do |sql|
-      ActiveRecord::Base.connection.execute sql
+    ActiveRecord::Migration.verbose = false
+    ActiveRecord::Migrator.migrate(File.expand_path("../../fixtures/migrations/", __FILE__)) do |migration|
+      true
     end
+    ActiveRecord::Base.clear_cache!
     @returnee = ActiveRecord::Returnee.new
   end
 
