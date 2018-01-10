@@ -1,4 +1,5 @@
 require "active_record/returnee/version"
+require 'active_record/returnee/railtie'
 
 module ActiveRecord
   class Returnee
