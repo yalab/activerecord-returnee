@@ -9,7 +9,7 @@ module ActiveRecord
       @foreign_keys = ActiveRecord::Base.connection.foreign_keys(table_name).each_with_object({}){|key, hash| hash[key.options[:column]] = key }
       <<~EOS
       class Create#{table_name.capitalize} < ActiveRecord::Migration[5.1]
-        def change
+        def change#{extension}
           create_table :#{table_name}#{id_type} do |t|
             #{columns}#{indexes}
           end
@@ -19,9 +19,15 @@ module ActiveRecord
     end
 
     private
+    def using_uuid?
+      @using_uuid ||= begin
+                        id = @columns.find{|column| column.name == "id" }
+                        id.sql_type == "uuid"
+                      end
+    end
+
     def id_type
-      id = @columns.find{|column| column.name == "id" }
-      if id.sql_type == "uuid"
+      if using_uuid?
         ", id: :uuid"
       end
     end
@@ -98,7 +104,7 @@ module ActiveRecord
               when :integer
                 column.default
               when :boolean
-                column.default == "f" ? 'false' : 'true'
+                ["f", "false"].include?(column.default) ? 'false' : 'true'
               else
                 %("#{column.default}")
               end
@@ -108,6 +114,13 @@ module ActiveRecord
     def timestamp(columns_hash)
       if columns_hash["created_at"] && columns_hash["updated_at"]
         "      t.timestamps"
+      end
+    end
+
+    def extension
+      return if ActiveRecord::Base.connection.adapter_name != "PostgreSQL"
+      if using_uuid?
+        "\n    enable_extension 'pgcrypto'"
       end
     end
   end
