@@ -25,6 +25,12 @@ module ActiveRecord
       EOS
     end
 
+    def dependencies
+      @columns
+        .select{|column| references?(column) }
+        .map{|column| column.name.gsub("_id", '').tableize.to_sym }
+    end
+
     private
     def using_uuid?
       @using_uuid ||= begin
