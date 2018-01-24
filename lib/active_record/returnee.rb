@@ -4,14 +4,20 @@ require 'active_record/returnee/railtie'
 module ActiveRecord
   class Returnee
     REG_ID = /_id\Z/
-    def to_create_table(table_name)
-      @columns = ActiveRecord::Base.connection.columns(table_name)
-      @indexes = ActiveRecord::Base.connection.indexes(table_name)
-      @foreign_keys = ActiveRecord::Base.connection.foreign_keys(table_name).each_with_object({}){|key, hash| hash[key.options[:column]] = key }
+    DEFAULT_COLUMNS = %w(id created_at updated_at).freeze
+    def initialize(table_name)
+      @table_name = table_name
+      @connection = ActiveRecord::Base.connection
+      @columns = @connection.columns(@table_name)
+      @indexes = @connection.indexes(@table_name)
+      @foreign_keys = @connection.foreign_keys(@table_name).each_with_object({}){|key, hash| hash[key.options[:column]] = key }
+    end
+
+    def to_create_table
       <<~EOS
-      class Create#{table_name.camelize} < ActiveRecord::Migration[5.1]
+      class Create#{@table_name.camelize} < ActiveRecord::Migration[5.1]
         def change#{extension}
-          create_table :#{table_name}#{id_type} do |t|
+          create_table :#{@table_name}#{id_type} do |t|
             #{columns}#{indexes}
           end
         end
@@ -34,7 +40,7 @@ module ActiveRecord
     end
 
     def columns
-      definitions = @columns.reject{|column| %w(id created_at updated_at).include?(column.name) }.map{|column|
+      definitions = @columns.reject{|column| DEFAULT_COLUMNS.include?(column.name) }.map{|column|
         column(column)
       }.join("\n      ")
       <<~EOS.chop
@@ -120,7 +126,7 @@ module ActiveRecord
     end
 
     def extension
-      return if ActiveRecord::Base.connection.adapter_name != "PostgreSQL"
+      return if @connection.adapter_name != "PostgreSQL"
       if using_uuid?
         "\n    enable_extension 'pgcrypto'"
       end

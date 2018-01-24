@@ -11,7 +11,6 @@ class ActiveRecord::ReturneeTest < Minitest::Test
       true
     end
     ActiveRecord::Base.clear_cache!
-    @returnee = ActiveRecord::Returnee.new
   end
 
   def test_that_it_has_a_version_number
@@ -19,19 +18,19 @@ class ActiveRecord::ReturneeTest < Minitest::Test
   end
 
   def test_create_users
-    assert_equal fixture_path(:users).read, @returnee.to_create_table("users")
+    assert_equal fixture_path(:users).read, ActiveRecord::Returnee.new("users").to_create_table
   end
 
   def test_create_groups
-    assert_equal fixture_path(:groups).read, @returnee.to_create_table("groups")
+    assert_equal fixture_path(:groups).read, ActiveRecord::Returnee.new("groups").to_create_table
   end
 
   def test_create_members
-    assert_equal fixture_path(:members).read, @returnee.to_create_table("members")
+    assert_equal fixture_path(:members).read, ActiveRecord::Returnee.new("members").to_create_table
   end
 
   def test_create_user_oauths
-    assert_equal fixture_path(:user_oauths).read, @returnee.to_create_table("user_oauths")
+    assert_equal fixture_path(:user_oauths).read, ActiveRecord::Returnee.new("user_oauths").to_create_table
   end
 
   private
