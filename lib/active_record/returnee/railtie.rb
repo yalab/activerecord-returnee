@@ -1,5 +1,7 @@
 require 'rails/railtie'
 require 'active_record'
+require 'rails/generators'
+require 'rails/generators/active_record'
 
 module ActiveRecord
   class Returnee
@@ -13,7 +15,9 @@ module ActiveRecord
             dir = ActiveRecord::Tasks::DatabaseTasks.migrations_paths.first
             returnee = ActiveRecord::Returnee.new
             ActiveRecord::Base.connection.tables.reject{|name| IGNORE_TABLES.include?(name) }.each do |table_name|
-              p returnee.to_create_table(table_name)
+              number = ActiveRecord::Generators::Base.next_migration_number(dir)
+              p "#{number}_create_#{table_name}"
+              #puts returnee.to_create_table(table_name)
 
             end
           end
