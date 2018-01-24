@@ -8,7 +8,7 @@ module ActiveRecord
       @indexes = ActiveRecord::Base.connection.indexes(table_name)
       @foreign_keys = ActiveRecord::Base.connection.foreign_keys(table_name).each_with_object({}){|key, hash| hash[key.options[:column]] = key }
       <<~EOS
-      class Create#{table_name.capitalize} < ActiveRecord::Migration[5.1]
+      class Create#{table_name.camelize} < ActiveRecord::Migration[5.1]
         def change#{extension}
           create_table :#{table_name}#{id_type} do |t|
             #{columns}#{indexes}
@@ -33,14 +33,13 @@ module ActiveRecord
     end
 
     def columns
-      columns_hash = @columns.each_with_object({}){|column, hash| hash[column.name] = column }
       definitions = @columns.reject{|column| %w(id created_at updated_at).include?(column.name) }.map{|column|
         column(column)
       }.join("\n      ")
       <<~EOS.chop
       #{definitions}
 
-      #{timestamp(columns_hash)}
+      #{timestamps}
       EOS
     end
 
@@ -59,6 +58,7 @@ module ActiveRecord
                 else
                   columns.map{|column| ":#{column}" }
                 end
+      columns = "[#{columns.join(", ")}]" if columns.is_a?(Array)
       "t.index #{columns}#{unique(index)}"
     end
 
@@ -88,9 +88,9 @@ module ActiveRecord
     end
 
     def references?(columns)
-      raise if columns.is_a?(Array) && columns.length > 1
+      return false if columns.is_a?(Array) && columns.length > 1
       column_name = columns.is_a?(Array) ? columns.first : columns.name
-      column_name =~ REG_ID && @indexes.find{|index| index.columns = [column_name]}
+      column_name =~ REG_ID && @indexes.find{|index| index.columns == [column_name] }
     end
 
     def null(column)
@@ -111,7 +111,8 @@ module ActiveRecord
       ", default: #{value}"
     end
 
-    def timestamp(columns_hash)
+    def timestamps
+      columns_hash = @columns.each_with_object({}){|column, hash| hash[column.name] = column }
       if columns_hash["created_at"] && columns_hash["updated_at"]
         "      t.timestamps"
       end

@@ -30,6 +30,10 @@ class ActiveRecord::ReturneeTest < Minitest::Test
     assert_equal fixture_path(:members).read, @returnee.to_create_table("members")
   end
 
+  def test_create_user_oauths
+    assert_equal fixture_path(:user_oauths).read, @returnee.to_create_table("user_oauths")
+  end
+
   private
   def fixture_path(name)
     Pathname.new Dir.glob(File.expand_path("../../fixtures/migrations/*#{name}*", __FILE__)).first

@@ -4,9 +4,9 @@ class CreateUserOauths < ActiveRecord::Migration[5.1]
       t.references :user, foreign_key: true
       t.string :provider
       t.string :uid
-      t.index [:provider, :uid]
 
       t.timestamps
+      t.index [:provider, :uid]
     end
   end
 end
