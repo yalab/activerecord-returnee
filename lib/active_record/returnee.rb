@@ -4,6 +4,7 @@ require 'active_record/returnee/railtie'
 module ActiveRecord
   class Returnee
     REG_ID = /_id\Z/
+    REG_TYPE = /_type\Z/
     DEFAULT_COLUMNS = %w(id created_at updated_at).freeze
     def initialize(table_name)
       @table_name = table_name
@@ -11,6 +12,7 @@ module ActiveRecord
       @columns = @connection.columns(@table_name)
       @indexes = @connection.indexes(@table_name)
       @foreign_keys = @connection.foreign_keys(@table_name).each_with_object({}){|key, hash| hash[key.options[:column]] = key }
+      @polymorphics = []
     end
 
     def to_create_table
@@ -48,7 +50,7 @@ module ActiveRecord
     def columns
       definitions = @columns.reject{|column| DEFAULT_COLUMNS.include?(column.name) }.map{|column|
         column(column)
-      }.join("\n      ")
+      }.compact.join("\n      ")
       <<~EOS.chop
       #{definitions}
 
@@ -57,7 +59,9 @@ module ActiveRecord
     end
 
     def indexes
-      indexes = @indexes.reject{|index| index.columns == ["id"] }
+      indexes = @indexes
+                  .reject{|index| index.columns == ["id"] }
+                  .reject{|index| @polymorphics.any?{|name| index.columns == ["#{name}_type", "#{name}_id"]} }
       indexes = indexes.map{|index| index(index) }.compact
       return if indexes.length < 1
       "\n      " + indexes.join("\n")
@@ -82,8 +86,12 @@ module ActiveRecord
     end
 
     def column(column)
-      if references?(column)
+      if polymorphic?(column)
+        "t.references :#{column.name.gsub(REG_TYPE, '')}, polymorphic: true, index: true"
+      elsif references?(column)
         "t.references :#{column.name.gsub(REG_ID, '')}#{foreign_key(column)}"
+      elsif @polymorphics.any?{|name| "#{name}_id" == column.name }
+        nil
       else
         "t.#{column.type} :#{column.name}#{null(column)}#{default(column)}"
       end
@@ -100,10 +108,18 @@ module ActiveRecord
       end
     end
 
-    def references?(columns)
-      return false if columns.is_a?(Array) && columns.length > 1
-      column_name = columns.is_a?(Array) ? columns.first : columns.name
+    def references?(column)
+      return false if column.is_a?(Array) && column.length > 1
+      column_name = column.is_a?(Array) ? column.first : column.name
       column_name =~ REG_ID && @indexes.find{|index| index.columns == [column_name] }
+    end
+
+    def polymorphic?(column)
+      if column.name =~ REG_TYPE
+        type_name = column.name
+        @polymorphics << column.name.gsub(REG_TYPE, '')
+        true
+      end
     end
 
     def null(column)

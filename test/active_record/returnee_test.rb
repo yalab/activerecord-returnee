@@ -33,7 +33,7 @@ class ActiveRecord::ReturneeTest < Minitest::Test
     assert_equal fixture_path(:user_oauths).read, ActiveRecord::Returnee.new("user_oauths").to_create_table
   end
 
-  def test_create_user_oauths
+  def test_create_user_pictures
     assert_equal fixture_path(:pictures).read, ActiveRecord::Returnee.new("pictures").to_create_table
   end
 
