@@ -26,6 +26,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "minitest", "~> 5.0"
   spec.add_development_dependency "sqlite3"
   spec.add_development_dependency "pg"
-  spec.add_dependency "activerecord", "~> 5.0"
-  spec.add_dependency "railties", "~> 5.0"
+  spec.add_dependency "activerecord", ">= 5.0"
+  spec.add_dependency "railties", ">= 5.0"
 end

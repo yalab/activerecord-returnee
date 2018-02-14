@@ -21,12 +21,18 @@ module ActiveRecord
               migration_number = (Time.now.utc.strftime("%Y%m%d%H%M") + "%02d") % number
               number += 1
               connection.execute("INSERT INTO schema_migrations (version) VALUES ('#{migration_number}')")
-
-              File.open(dir.join("#{migration_number}_create_#{table_name}.rb"), "w") do |f|
+              fname = if table_name == "active_storage_blobs"
+                        table_name = "active_storage"
+                        "#{migration_number}_create_active_storage_tables.active_storagecreate_active_storage.rb"
+                      else
+                        "#{migration_number}_create_#{table_name}.rb"
+                      end
+              File.open(dir.join(fname), "w") do |f|
                 f.puts ActiveRecord::Returnee.new(table_name).to_create_table
               end
               finished << table_name.to_sym
             }
+            @dependency_tree.delete("active_storage_attachments")
             @dependency_tree.delete(nil).each do |table_name|
               create_migration.call(table_name)
             end
@@ -44,7 +50,6 @@ module ActiveRecord
             @dependency_tree = {}
             table_names = ActiveRecord::Base.connection.tables.reject{|name| IGNORE_TABLES.include?(name) }
             table_names.each do |table_name|
-              next if table_name == "active_storage_attachments"
               dependencies = ActiveRecord::Returnee.new(table_name).dependencies
               if dependencies.length < 1
                 @dependency_tree[nil] ||= []

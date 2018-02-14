@@ -37,6 +37,10 @@ class ActiveRecord::ReturneeTest < Minitest::Test
     assert_equal fixture_path(:pictures).read, ActiveRecord::Returnee.new("pictures").to_create_table
   end
 
+  def test_create_user_pictures
+    assert_equal fixture_path(:active_storage).read, ActiveRecord::Returnee.new("active_storage").to_create_table
+  end
+
   def test_members_dependencies
     assert_equal [:users, :groups], ActiveRecord::Returnee.new("members").dependencies
   end
