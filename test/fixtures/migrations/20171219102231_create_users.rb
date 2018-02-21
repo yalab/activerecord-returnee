@@ -13,6 +13,7 @@ class CreateUsers < ActiveRecord::Migration[5.1]
       t.date :birthday
       t.binary :avatar
       t.boolean :email_receive, default: false
+      t.integer :source_type
 
       t.timestamps
       t.index :email, unique: true

@@ -147,9 +147,11 @@ module ActiveRecord
     end
 
     def polymorphic?(column)
-      if column.name =~ REG_TYPE
-        type_name = column.name
-        @polymorphics << column.name.gsub(REG_TYPE, '')
+      type_name = column.name
+      name = type_name.gsub(REG_TYPE, '')
+      type_id = "#{name}_id"
+      if type_name =~ REG_TYPE && @columns.find{|col| col.name == type_id }
+        @polymorphics << name
         true
       end
     end
